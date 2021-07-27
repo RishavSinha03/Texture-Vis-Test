@@ -14,7 +14,15 @@ class WallDesignVisualizer {
 
   /// Returns the path of the image with the Wall Design applied.
   static Future<String?> paintWallDesign(
-      CameraImage cameraImage, String wallDesignImagePath, double viewportHeight, double viewportWidth, double xTap, double yTap) async {
+    CameraImage cameraImage,
+    String wallDesignImagePath,
+    double viewportHeight,
+    double viewportWidth,
+    double xTap,
+    double yTap,
+    double cameraImageHeight,
+    double cameraImageWidth,
+  ) async {
     final String? outputImagePath = await _channel.invokeMethod(
       "paintWallDesign",
       {
@@ -26,6 +34,8 @@ class WallDesignVisualizer {
         "viewportWidth": viewportWidth,
         "xTap": xTap,
         "yTap": yTap,
+        "cameraImageHeight": cameraImageHeight,
+        "cameraImageWidth": cameraImageWidth,
       },
     );
 

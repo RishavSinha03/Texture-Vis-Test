@@ -44,16 +44,19 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  Future getImage(ImageSource imageSource) async {
+  Future<File?> getImage(ImageSource imageSource) async {
     final pickedFile = await picker.pickImage(source: imageSource);
 
     setState(() {
       if (pickedFile != null) {
         pickedImageFile = File(pickedFile.path);
+        print("main.dart: image picked $pickedImageFile");
       } else {
         print('No image selected.');
       }
     });
+
+    return pickedImageFile;
   }
 
   @override
@@ -76,15 +79,15 @@ class _MyAppState extends State<MyApp> {
                       actions: [
                         TextButton(
                           onPressed: () {
-                            getImage(ImageSource.gallery);
-                            Navigator.pop(dialogContext);
+                            var file = getImage(ImageSource.gallery);
+                            Navigator.pop(dialogContext, file);
                           },
                           child: Text("Gallery"),
                         ),
                         TextButton(
                           onPressed: () {
-                            getImage(ImageSource.camera);
-                            Navigator.pop(dialogContext);
+                            var file = getImage(ImageSource.camera);
+                            Navigator.pop(dialogContext, file);
                           },
                           child: Text("Camera"),
                         ),
@@ -92,7 +95,9 @@ class _MyAppState extends State<MyApp> {
                     );
                   },
                 ).then((value) {
-                  if (pickedImageFile != null) {
+                  print("main.dart: returned value : $value");
+                  if (value != null) {
+                    print("main.dart: Visualizer invoked");
                     Navigator.push(context, MaterialPageRoute(builder: (context) => VisualizeWallDesign(wallDesignImagePath: pickedImageFile!.path)));
                   }
                 });

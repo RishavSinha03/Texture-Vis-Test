@@ -28,8 +28,8 @@ class _ShowCameraPreviewState extends State<ShowCameraPreview> {
 
   /*int cameraImageActualWidth = 0;
   int cameraImageActualHeight = 0;*/
-  double? xTap;
-  double? yTap;
+  double? xTap = 0.0;
+  double? yTap = 0.0;
   late Size sizeOfViewport;
 
   @override
@@ -54,8 +54,16 @@ class _ShowCameraPreviewState extends State<ShowCameraPreview> {
   }
 
   processFrame(CameraImage image) {
-    WallDesignVisualizer.paintWallDesign(image, widget.wallDesignImagePath, sizeOfViewport.height, sizeOfViewport.width, xTap!, yTap!)
-        .then((outputPath) {
+    WallDesignVisualizer.paintWallDesign(
+      image,
+      widget.wallDesignImagePath,
+      sizeOfViewport.height,
+      sizeOfViewport.width,
+      xTap!,
+      yTap!,
+      image.height.toDouble(),
+      image.width.toDouble(),
+    ).then((outputPath) {
       var bytes = File(outputPath!).readAsBytesSync();
       if (listOfStackedProcessedFrames.length > 3) {
         listOfStackedProcessedFrames.removeLast();

@@ -10,6 +10,7 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import org.opencv.android.OpenCVLoader
 import org.opencv.android.Utils
 import org.opencv.core.*
 import org.opencv.imgproc.Imgproc
@@ -30,6 +31,13 @@ class WallDesignVisualizerPlugin: FlutterPlugin, MethodCallHandler {
   /// when the Flutter Engine is detached from the Activity
   private lateinit var channel : MethodChannel
 
+  init {
+    if (!OpenCVLoader.initDebug())
+      Log.e("OpenCv", "Unable to load OpenCV");
+    else
+      Log.d("OpenCv", "OpenCV loaded");
+  }
+
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
     channel = MethodChannel(flutterPluginBinding.binaryMessenger, "wall_design_visualizer")
     channel.setMethodCallHandler(this)
@@ -49,9 +57,11 @@ class WallDesignVisualizerPlugin: FlutterPlugin, MethodCallHandler {
           val viewportWidth: Double? = call.argument("viewportWidth")
           val xTap: Double? = call.argument("xTap")
           val yTap: Double? = call.argument("yTap")
+          val cameraImageHeight: Double? = call.argument("cameraImageHeight")
+          val cameraImageWidth: Double? = call.argument("cameraImageWidth")
 
           val processImage = ProcessImage(viewportHeight ?: 0.0,viewportWidth?: 0.0,wallDesignImagePath ?: "")
-          val outputImagePath = processImage.applyTexture(yuvToBitmap(plane0bytes!!+ plane1bytes!!+plane2bytes!!, viewportWidth!!.toInt(),viewportHeight!!.toInt())!!,Point(xTap?:0.0,yTap?:0.0))
+          val outputImagePath = processImage.applyTexture(yuvToBitmap(plane0bytes!!+ plane1bytes!!+plane2bytes!!, cameraImageWidth!!.toInt(),cameraImageHeight!!.toInt())!!,Point(xTap?:0.0,yTap?:0.0))
 
           result.success(outputImagePath)
         }
