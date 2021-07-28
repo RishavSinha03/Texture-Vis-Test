@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:wall_design_visualizer/wall_design_visualizer.dart';
 
 class ShowCameraPreview extends StatefulWidget {
@@ -31,6 +32,7 @@ class _ShowCameraPreviewState extends State<ShowCameraPreview> {
   double? xTap = 0.0;
   double? yTap = 0.0;
   late Size sizeOfViewport;
+  Directory? outputDirectory;
 
   @override
   void initState() {
@@ -45,12 +47,16 @@ class _ShowCameraPreviewState extends State<ShowCameraPreview> {
           _controller.startImageStream((CameraImage image) {
             /*cameraImageActualHeight = image.height;
             cameraImageActualWidth = image.width;*/
-            if (!processingFrame && xTap != null) {
+            if (!processingFrame && xTap != null && outputDirectory != null) {
               processFrame(image);
               processingFrame = true;
             }
           }),
         });
+
+    getTemporaryDirectory().then((value) {
+      outputDirectory = value;
+    });
   }
 
   processFrame(CameraImage image) {
@@ -63,7 +69,9 @@ class _ShowCameraPreviewState extends State<ShowCameraPreview> {
       yTap!,
       image.height.toDouble(),
       image.width.toDouble(),
+      outputDirectory!.path,
     ).then((outputPath) {
+      print("show_camera_preview.dart: outputPath: $outputPath");
       var bytes = File(outputPath!).readAsBytesSync();
       if (listOfStackedProcessedFrames.length > 3) {
         listOfStackedProcessedFrames.removeLast();

@@ -22,6 +22,7 @@ class WallDesignVisualizer {
     double yTap,
     double cameraImageHeight,
     double cameraImageWidth,
+    String outputDir,
   ) async {
     final String? outputImagePath = await _channel.invokeMethod(
       "paintWallDesign",
@@ -36,6 +37,7 @@ class WallDesignVisualizer {
         "yTap": yTap,
         "cameraImageHeight": cameraImageHeight,
         "cameraImageWidth": cameraImageWidth,
+        "outputDir": outputDir,
       },
     );
 

@@ -13,6 +13,7 @@ import io.flutter.plugin.common.MethodChannel.Result
 import org.opencv.android.OpenCVLoader
 import org.opencv.android.Utils
 import org.opencv.core.*
+import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
 import java.io.File
 import java.io.FileNotFoundException
@@ -30,6 +31,8 @@ class WallDesignVisualizerPlugin: FlutterPlugin, MethodCallHandler {
   /// This local reference serves to register the plugin with the Flutter Engine and unregister it
   /// when the Flutter Engine is detached from the Activity
   private lateinit var channel : MethodChannel
+
+  private lateinit var outputDir: String
 
   init {
     if (!OpenCVLoader.initDebug())
@@ -59,6 +62,7 @@ class WallDesignVisualizerPlugin: FlutterPlugin, MethodCallHandler {
           val yTap: Double? = call.argument("yTap")
           val cameraImageHeight: Double? = call.argument("cameraImageHeight")
           val cameraImageWidth: Double? = call.argument("cameraImageWidth")
+          outputDir = call.argument("outputDir")?:""
 
           val processImage = ProcessImage(viewportHeight ?: 0.0,viewportWidth?: 0.0,wallDesignImagePath ?: "")
           val outputImagePath = processImage.applyTexture(yuvToBitmap(plane0bytes!!+ plane1bytes!!+plane2bytes!!, cameraImageWidth!!.toInt(),cameraImageHeight!!.toInt())!!,Point(xTap?:0.0,yTap?:0.0))
@@ -199,8 +203,21 @@ class WallDesignVisualizerPlugin: FlutterPlugin, MethodCallHandler {
 
       val texture = getTextureImage(wallDesignImagePath)
 
-      val textureImgMat = Mat()
+      var textureImgMat = Mat()
+      //Imgproc.cvtColor(texture, texture, Imgproc.COLOR_RGB2GRAY)
+      if(wallMask.size().height>texture.size().height){
+        Imgproc.resize(texture,texture,wallMask.size(), 0.0,0.0 , Imgproc.INTER_CUBIC)
+      }
+      else{
+        Imgproc.resize(texture,texture,wallMask.size(), 0.0,0.0 , Imgproc.INTER_AREA)
+      }
+
+      //Log.i(TAG, "wallMask Mat type:${wallMask.type()} channels:${wallMask.channels()} size:${wallMask.size()}, texture Mat type:${texture.type()} channels:${texture.channels()} size: ${texture.size()}")
       Core.bitwise_and(wallMask ,texture,textureImgMat)
+      /*textureImgMat = wallMask.clone()
+      textureImgMat.setTo(Scalar(0.0),texture.inv())*/
+      /*Core.bitwise_and(wallMask,wallMask,textureImgMat,texture)*/
+
 
       showImage(textureImgMat)
 
@@ -230,7 +247,8 @@ class WallDesignVisualizerPlugin: FlutterPlugin, MethodCallHandler {
       //showImage(result)
       val mBitmap = Bitmap.createBitmap(result.cols(), result.rows(), Bitmap.Config.ARGB_8888);
       Utils.matToBitmap(result, mBitmap)
-      val pictureFile = createImageFile()
+      val pictureFile = File.createTempFile("resultImage",".png",File(outputDir))
+      pictureFile.deleteOnExit()
       try {
         val fos = FileOutputStream(pictureFile);
         mBitmap.compress(Bitmap.CompressFormat.PNG, 90, fos)
@@ -276,6 +294,7 @@ class WallDesignVisualizerPlugin: FlutterPlugin, MethodCallHandler {
               storageDir      // directory
       )
 
+      image.deleteOnExit()
       imageFilePath = image.absolutePath
       return image;
     }
