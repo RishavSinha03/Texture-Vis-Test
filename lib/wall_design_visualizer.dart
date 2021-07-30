@@ -13,6 +13,8 @@ class WallDesignVisualizer {
   }
 
   /// Returns the path of the image with the Wall Design applied.
+  ///
+  /// CameraImage bytes are sent to android for each plane (0,1,2) -> Android takes the bytes and converts the YUV420 to bitmap format and processes it -> android saves the resulting image to a path and sends back the path to flutter.
   static Future<String?> paintWallDesign(
     CameraImage cameraImage,
     String wallDesignImagePath,
@@ -43,6 +45,33 @@ class WallDesignVisualizer {
 
     return outputImagePath;
   }
-}
 
-// CameraImage bytes are sent to android for each plane (0,1,2) -> Android takes the bytes and converts the YUV420 to bitmap format and processes it -> android saves the resulting image to a path and sends back the path to flutter.
+  static Future<String?> paintWallDesignSingleImage(
+    String inputPath,
+    String wallDesignImagePath,
+    double viewportHeight,
+    double viewportWidth,
+    double xTap,
+    double yTap,
+    /*double inputImageOriginalHeight,
+    double inputImageOriginalWidth,*/
+    String outputPath,
+  ) async {
+    final String? outputImagePath = await _channel.invokeMethod(
+      "paintWallDesignSingleImage",
+      {
+        "inputPath": inputPath,
+        "wallDesignImagePath": wallDesignImagePath,
+        "viewportHeight": viewportHeight,
+        "viewportWidth": viewportWidth,
+        "xTap": xTap,
+        "yTap": yTap,
+        /*"inputImageOriginalHeight": inputImageOriginalHeight,
+        "inputImageOriginalWidth": inputImageOriginalWidth,*/
+        "outputPath": outputPath,
+      },
+    );
+
+    return outputImagePath;
+  }
+}

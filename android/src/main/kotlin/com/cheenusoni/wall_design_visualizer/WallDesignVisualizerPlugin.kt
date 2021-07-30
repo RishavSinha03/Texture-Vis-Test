@@ -13,7 +13,6 @@ import io.flutter.plugin.common.MethodChannel.Result
 import org.opencv.android.OpenCVLoader
 import org.opencv.android.Utils
 import org.opencv.core.*
-import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
 import java.io.File
 import java.io.FileNotFoundException
@@ -48,30 +47,50 @@ class WallDesignVisualizerPlugin: FlutterPlugin, MethodCallHandler {
 
   override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
     when (call.method) {
-        "getPlatformVersion" -> {
-          result.success("Android ${android.os.Build.VERSION.RELEASE}")
-        }
-        "paintWallDesign" -> {
-          val plane0bytes: ByteArray? = call.argument("Uint8List bytes for plane 0")
-          val plane1bytes: ByteArray? = call.argument("Uint8List bytes for plane 1")
-          val plane2bytes: ByteArray? = call.argument("Uint8List bytes for plane 2")
-          val wallDesignImagePath: String? = call.argument("wallDesignImagePath")
-          val viewportHeight: Double? = call.argument("viewportHeight")
-          val viewportWidth: Double? = call.argument("viewportWidth")
-          val xTap: Double? = call.argument("xTap")
-          val yTap: Double? = call.argument("yTap")
-          val cameraImageHeight: Double? = call.argument("cameraImageHeight")
-          val cameraImageWidth: Double? = call.argument("cameraImageWidth")
-          outputDir = call.argument("outputDir")?:""
+      "getPlatformVersion" -> {
+        result.success("Android ${android.os.Build.VERSION.RELEASE}")
+      }
+      "paintWallDesign" -> {
+        val plane0bytes: ByteArray? = call.argument("Uint8List bytes for plane 0")
+        val plane1bytes: ByteArray? = call.argument("Uint8List bytes for plane 1")
+        val plane2bytes: ByteArray? = call.argument("Uint8List bytes for plane 2")
+        val wallDesignImagePath: String? = call.argument("wallDesignImagePath")
+        val viewportHeight: Double? = call.argument("viewportHeight")
+        val viewportWidth: Double? = call.argument("viewportWidth")
+        val xTap: Double? = call.argument("xTap")
+        val yTap: Double? = call.argument("yTap")
+        val cameraImageHeight: Double? = call.argument("cameraImageHeight")
+        val cameraImageWidth: Double? = call.argument("cameraImageWidth")
+        outputDir = call.argument("outputDir") ?: ""
 
-          val processImage = ProcessImage(viewportHeight ?: 0.0,viewportWidth?: 0.0,wallDesignImagePath ?: "")
-          val outputImagePath = processImage.applyTexture(yuvToBitmap(plane0bytes!!+ plane1bytes!!+plane2bytes!!, cameraImageWidth!!.toInt(),cameraImageHeight!!.toInt())!!,Point(xTap?:0.0,yTap?:0.0))
+        val processImage = ProcessImage(viewportHeight ?: 0.0, viewportWidth
+                ?: 0.0, wallDesignImagePath ?: "")
+        val outputImagePath = processImage.applyTexture(yuvToBitmap(plane0bytes!! + plane1bytes!! + plane2bytes!!, cameraImageWidth!!.toInt(), cameraImageHeight!!.toInt())!!, Point(xTap
+                ?: 0.0, yTap ?: 0.0))
 
-          result.success(outputImagePath)
-        }
-        else -> {
-          result.notImplemented()
-        }
+        result.success(outputImagePath)
+      }
+      "paintWallDesignSingleImage" -> {
+        val inputPath: String? = call.argument("inputPath")
+        val wallDesignImagePath: String? = call.argument("wallDesignImagePath")
+        val viewportHeight: Double? = call.argument("viewportHeight")
+        val viewportWidth: Double? = call.argument("viewportWidth")
+        val xTap: Double? = call.argument("xTap")
+        val yTap: Double? = call.argument("yTap")
+        /*val inputImageOriginalHeight: Double? = call.argument("inputImageOriginalHeight")
+        val inputImageOriginalWidth: Double? = call.argument("inputImageOriginalWidth")*/
+        val outputPath = call.argument("outputPath") ?: ""
+
+        val processImage = ProcessImage(viewportHeight ?: 0.0, viewportWidth
+                ?: 0.0, wallDesignImagePath ?: "")
+        val outputImagePath = processImage.applyTexture(getBitmapFromPath(inputPath!!)!!, Point(xTap
+                ?: 0.0, yTap ?: 0.0),outputPath= outputPath)
+
+        result.success(outputImagePath)
+      }
+      else -> {
+        result.notImplemented()
+      }
     }
   }
 
@@ -100,6 +119,16 @@ class WallDesignVisualizerPlugin: FlutterPlugin, MethodCallHandler {
     return bmp
   }
 
+  private fun getBitmapFromPath(inputPath:String): Bitmap?{
+    val imgFile = File(inputPath)
+    if (imgFile.exists()) {
+      return BitmapFactory.decodeFile(imgFile.absolutePath)
+    }
+    else{
+      return null
+    }
+  }
+
   inner class ProcessImage(private var heightOfViewPort: Double,
                            private var widthOfViewPort: Double,
                            private var wallDesignImagePath: String) {
@@ -107,7 +136,7 @@ class WallDesignVisualizerPlugin: FlutterPlugin, MethodCallHandler {
     private val TAG = "ProcessImage"
     private lateinit var imageFilePath: String
 
-    fun applyTexture(bitmap: Bitmap, p: Point) : String? {
+    fun applyTexture(bitmap: Bitmap, p: Point, outputPath: String = "") : String? {
       val cannyMinThres = 30.0
       val ratio = 2.5
 
@@ -247,7 +276,8 @@ class WallDesignVisualizerPlugin: FlutterPlugin, MethodCallHandler {
       //showImage(result)
       val mBitmap = Bitmap.createBitmap(result.cols(), result.rows(), Bitmap.Config.ARGB_8888);
       Utils.matToBitmap(result, mBitmap)
-      val pictureFile = File.createTempFile("resultImage",".png",File(outputDir))
+        val pictureFile = if (outputPath.equals("")) File(outputDir, "resultImage.png") else File(outputPath)
+
       pictureFile.deleteOnExit()
       try {
         val fos = FileOutputStream(pictureFile);

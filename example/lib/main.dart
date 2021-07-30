@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:wall_design_visualizer/wall_design_visualizer.dart';
+import 'package:wall_design_visualizer_example/paint_single_image.dart';
 import 'package:wall_design_visualizer_example/visualize_wall_design.dart';
 
 void main() {
@@ -102,8 +103,42 @@ class _MyAppState extends State<MyApp> {
                   }
                 });
               },
-              child: Text("Start"),
-            )
+              child: Text("Paint using live camera"),
+            ),
+            TextButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (dialogContext) {
+                    return AlertDialog(
+                      title: Text("Choose a texture image"),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            var file = getImage(ImageSource.gallery);
+                            Navigator.pop(dialogContext, file);
+                          },
+                          child: Text("Gallery"),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            var file = getImage(ImageSource.camera);
+                            Navigator.pop(dialogContext, file);
+                          },
+                          child: Text("Camera"),
+                        ),
+                      ],
+                    );
+                  },
+                ).then((value) {
+                  print("main.dart: returned value : $value");
+                  if (value != null) {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => PaintSingleImage(wallDesignImagePath: pickedImageFile!.path)));
+                  }
+                });
+              },
+              child: Text("Paint Single Image"),
+            ),
           ],
         ),
       ),
